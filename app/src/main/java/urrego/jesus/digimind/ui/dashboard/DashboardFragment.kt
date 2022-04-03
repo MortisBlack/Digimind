@@ -1,15 +1,26 @@
 package urrego.jesus.digimind.ui.dashboard
 
+import android.app.TimePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.TimePicker
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.google.gson.Gson
 import urrego.jesus.digimind.R
 import urrego.jesus.digimind.databinding.FragmentDashboardBinding
+import urrego.jesus.digimind.ui.Task
+import urrego.jesus.digimind.ui.home.HomeFragment
+import java.sql.Time
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 class DashboardFragment : Fragment() {
 
@@ -31,7 +42,67 @@ class DashboardFragment : Fragment() {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
+        binding.btnTime.setOnClickListener{
+            set_time()
+        }
+
+        binding.btnSave.setOnClickListener{
+            guardar()
+        }
         return root
+    }
+
+    fun guardar(){
+        var title: String = binding.etTask.text.toString()
+        var time: String = binding.btnTime.text.toString()
+
+        var day: String = ""
+
+        if(binding.rbDay1.isChecked) day = getString(R.string.day1)
+        if(binding.rbDay2.isChecked) day = getString(R.string.day2)
+        if(binding.rbDay3.isChecked) day = getString(R.string.day3)
+        if(binding.rbDay4.isChecked) day = getString(R.string.day4)
+        if(binding.rbDay5.isChecked) day = getString(R.string.day5)
+        if(binding.rbDay6.isChecked) day = getString(R.string.day6)
+        if(binding.rbDay7.isChecked) day = getString(R.string.day7)
+
+        var task = Task(title, day, time)
+
+        HomeFragment.tasks.add(task)
+        Toast.makeText(context, "Se agregó la tarea", Toast.LENGTH_SHORT).show()
+
+        guardar_json()
+    }
+
+    fun guardar_json() {
+        val preferencias = context?.getSharedPreferences("preferencias", Context.MODE_PRIVATE)
+        val editor = preferencias?.edit()
+
+        val gson: Gson = Gson()
+
+        var json = gson.toJson(HomeFragment.tasks)
+
+        editor?.putString("tareas", json)
+
+        editor?.apply()
+    }
+
+    fun set_time(){
+        val cal = Calendar.getInstance()
+        val timeSetListener = TimePickerDialog.OnTimeSetListener{
+            TimePicker, hour, minute ->
+            cal.set(Calendar.HOUR_OF_DAY, hour)
+            cal.set(Calendar.MINUTE, minute)
+
+            binding.btnTime.text = SimpleDateFormat("HH:mm").format(cal.time)
+        }
+        TimePickerDialog(
+            context,
+            timeSetListener,
+            cal.get(Calendar.HOUR_OF_DAY),
+        cal.get(Calendar.MINUTE),
+        true
+        ).show()
     }
 
     override fun onDestroyView() {
